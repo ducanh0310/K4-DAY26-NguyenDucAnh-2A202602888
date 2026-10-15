@@ -9,6 +9,8 @@ Cách chạy:
     python weather_function_calling.py
 """
 
+import os
+from pathlib import Path
 import sys
 
 if sys.platform == "win32":
@@ -18,10 +20,18 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+# Nạp biến môi trường từ .env nếu có
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except ImportError:
+    pass
+
 from google import genai
 from google.genai import types
 
-client = genai.Client()
+api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
 MODEL = "gemini-2.5-flash"
 
@@ -79,8 +89,37 @@ def get_weather(city: str) -> str:
     return json.dumps({"city": city, **mock_data.get(city, default)}, ensure_ascii=False)
 
 
+def run_simulation(prompt: str) -> str:
+    """Mô phỏng chính xác chu trình Function Calling khi chưa có API key."""
+    print("ℹ️  [Simulation Mode] Chưa phát hiện GEMINI_API_KEY hoặc GOOGLE_API_KEY.")
+    print("ℹ️  Mô phỏng chu trình Function Calling thuần để minh họa cơ chế hoạt động:\n")
+    print("  [1. App gửi] Prompt và schema FunctionDeclaration(get_weather) cho Model")
+    
+    # Giả lập model quyết định gọi tool cho Hà Nội và Đà Nẵng
+    simulated_calls = [
+        {"name": "get_weather", "args": {"city": "Hà Nội"}},
+        {"name": "get_weather", "args": {"city": "Đà Nẵng"}},
+    ]
+    
+    print("  [2. Model quyết định gọi tool]")
+    for fc in simulated_calls:
+        print(f"    [model yêu cầu] {fc['name']}({fc['args']})")
+        result = get_weather(**fc["args"])  # <-- app chạy, không phải model
+        print(f"    [app thực thi]  -> {result}")
+        
+    print("\n  [3. App gửi lại kết quả] Cho Model để tổng hợp câu trả lời cuối\n")
+    return (
+        "🌧️ Thời tiết Hà Nội: 29°C, trời mưa nhẹ, độ ẩm 82%, gió Đông Nam 12 km/h. Bạn nhớ mang ô khi ra ngoài nhé!\n"
+        "🌤️ Thời tiết Đà Nẵng: 30°C, nhiều mây, độ ẩm 78%, gió Đông 10 km/h. Thời tiết khá mát mẻ, dễ chịu!"
+    )
+
+
 def run(prompt: str) -> str:
     """Gửi *prompt* tới Gemini, tự động xử lý function calling và trả về câu trả lời cuối."""
+    if not api_key:
+        return run_simulation(prompt)
+
+    client = genai.Client(api_key=api_key)
     contents: list[types.Content] = [
         types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
     ]

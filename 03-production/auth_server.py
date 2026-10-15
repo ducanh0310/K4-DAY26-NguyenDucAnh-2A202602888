@@ -58,6 +58,7 @@ mcp = MCPServer(
     auth=AuthSettings(
         issuer_url="http://localhost:8000",
         resource_server_url="http://localhost:8000",
+        validate_token_resource=False,
     ),
     token_verifier=StaticTokenVerifier(),
 )
