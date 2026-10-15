@@ -15,7 +15,15 @@ Cách chạy:
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timezone
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from mcp.server.mcpserver import MCPServer
 

@@ -2,6 +2,15 @@ from typing import Any
 import asyncio
 import httpx
 import os
+import sys
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
@@ -139,12 +148,19 @@ print("✅ MCP server initialized with Streamable HTTP transport")
 print("🔧 Available tools: get_current_weather, get_forecast, health_check")
 
 if __name__ == "__main__":
-    import sys
-    
-    is_cloud_run = bool(os.getenv("PORT"))
-    is_standalone = len(sys.argv) == 1 and sys.stdin.isatty()
-    
-    if is_cloud_run or is_standalone:
+    # Determine transport: command line flags take precedence, then env var, default to streamable-http
+    transport = os.getenv("MCP_TRANSPORT", "").strip().lower()
+    if "--stdio" in sys.argv:
+        transport = "stdio"
+    elif "--streamable-http" in sys.argv or "--http" in sys.argv:
+        transport = "streamable-http"
+
+    if not transport:
+        # Default to streamable-http so running directly or as a background service
+        # always starts the HTTP server on port 8085 as expected by the ADK client
+        transport = "streamable-http"
+
+    if transport == "streamable-http":
         print(f"🚀 Starting MCP server on http://0.0.0.0:{port}/mcp")
         mcp.run(transport="streamable-http")
     else:

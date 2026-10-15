@@ -2,14 +2,24 @@
 
 import asyncio
 import json
+from pathlib import Path
 import sys
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+SERVER_SCRIPT = str((Path(__file__).parent / "versioned_server.py").resolve())
+
 
 async def main() -> None:
-    params = StdioServerParameters(command=sys.executable, args=["versioned_server.py"])
+    params = StdioServerParameters(command=sys.executable, args=[SERVER_SCRIPT])
 
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
