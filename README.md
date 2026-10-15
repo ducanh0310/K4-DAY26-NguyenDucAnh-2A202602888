@@ -39,23 +39,40 @@ day26-mcp/
 ## Quick start
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+# 1. Khởi tạo môi trường ảo và cài đặt thư viện
+uv venv .venv
+.venv\Scripts\activate          # Trên Windows (hoặc: source .venv/bin/activate trên Linux/macOS)
+uv pip install -r requirements.txt
 
-# MCP demo (không cần API key)
-cd 02-mcp-basics && python weather_client.py
+# 2. Tạo file .env từ file mẫu (tùy chọn để chạy live Gemini / WeatherAPI)
+cp .env.example .env
 
-# Function Calling (cần Gemini API key)
-export GEMINI_API_KEY=...
-cd 01-function-calling && python weather_function_calling.py
+# 3. CHẠY BỘ KIỂM THỬ TỰ ĐỘNG TOÀN DIỆN TẤT CẢ MODULES (21/21 TESTS PASS)
+python verify_all.py
 
-# Production — Auth (2 terminal)
-cd 03-production
-python auth_server.py              # terminal 1
-python auth_client.py              # terminal 2
+# 4. Hoặc chạy từng bài riêng lẻ:
+# Module 01: Function Calling thuần (có Simulation Mode nếu chưa có API key)
+python 01-function-calling/weather_function_calling.py
 
-# Production — Tool Registry
-cd 03-production && python registry_client.py
+# Module 02: MCP Basics (stdio transport)
+python 02-mcp-basics/weather_client.py
+
+# Module 03: Production Patterns
+# - 3A. Auth (2 terminal):
+python 03-production/auth_server.py      # Terminal 1
+python 03-production/auth_client.py      # Terminal 2 (Test 3 kịch bản: Hợp lệ, Sai token, Thiếu token)
+# - 3B. Tool Registry & Discovery:
+python 03-production/registry_client.py
+# - 3C. Versioning & Backward Compatibility:
+python 03-production/versioned_client.py
+
+# Module 04: Lab Weather Agent (Google ADK + FastMCP Server)
+# - Terminal 1: Khởi động FastMCP Server
+cd 04-lab/mcp-server && uv run python weather.py
+# - Terminal 2: Chạy kiểm thử Agent qua CLI
+cd 04-lab/mcp-client && uv run python run_agent_cli.py
+# - Hoặc mở giao diện Web tương tác:
+cd 04-lab/mcp-client && uv run adk web    # Mở http://localhost:8000
 ```
 
 ---
