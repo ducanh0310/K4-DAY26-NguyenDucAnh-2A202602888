@@ -18,19 +18,16 @@ def check_environment():
     """Check if .env file exists and is configured"""
     print("🔍 Checking environment configuration...")
     
-    env_file = Path(".env")
-    if not env_file.exists():
-        print("❌ .env file not found")
-        print("   Run: echo 'GOOGLE_API_KEY=your_key' > .env")
-        return False
-    
-    # Check if GOOGLE_API_KEY is set
     from dotenv import load_dotenv
-    load_dotenv()
+    # Load from local directory, parent, or workspace root
+    load_dotenv(Path(".env"))
+    load_dotenv(Path("../.env"))
+    load_dotenv(Path("../../.env"))
     
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key or api_key == "your_google_api_key_here":
-        print("❌ GOOGLE_API_KEY not configured in .env")
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not api_key or api_key in ("your_google_api_key_here", "your_gemini_api_key_here"):
+        print("❌ GOOGLE_API_KEY / GEMINI_API_KEY not configured in .env")
+        print("   Create .env: echo 'GOOGLE_API_KEY=your_key' > .env")
         print("   Get key from: https://aistudio.google.com/apikey")
         return False
     
@@ -40,6 +37,9 @@ def check_environment():
 def check_dependencies():
     """Check if required packages are installed"""
     print("\n🔍 Checking dependencies...")
+    
+    import warnings
+    warnings.filterwarnings("ignore")
     
     required_packages = [
         ("google.adk", "Google ADK"),
